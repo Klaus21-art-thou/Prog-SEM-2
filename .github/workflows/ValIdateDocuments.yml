@@ -4,15 +4,15 @@ name: ValIdateDocuments
 on:
   push:
     paths:
-      - "API.md"
-      - "ERD.pdf"
-      - "RaceDay.sql"
+      - "Docs/API.md"
+      - "Docs/ERD.pdf"
+      - "Docs/RaceDay.sql"
       - ".github/workflows/ValIdateDocuments.yml"
   pull_request:
     paths:
-      - "API.md"
-      - "ERD.pdf"
-      - "RaceDay.sql"
+      - "Docs/API.md"
+      - "Docs/ERD.pdf"
+      - "Docs/RaceDay.sql"
       - ".github/workflows/ValIdateDocuments.yml"
 
 permissions:
@@ -33,9 +33,9 @@ jobs:
           set -euo pipefail
 
           files=(
-            "API.md"
-            "ERD.pdf"
-            "RaceDay.sql"
+            "Docs/API.md"
+            "Docs/ERD.pdf"
+            "Docs/RaceDay.sql"
           )
 
           for file in "${files[@]}"; do
@@ -54,7 +54,7 @@ jobs:
         uses: DavidAnson/markdownlint-cli2-action@v19
         with:
           globs: |
-            API.md
+            Docs/API.md
 
       - name: Validate PDF
         shell: bash
@@ -65,17 +65,17 @@ jobs:
           sudo apt-get install -y --no-install-recommends poppler-utils
 
           # Check that the file is actually a readable PDF.
-          pdfinfo ERD.pdf >/tmp/erd-pdfinfo.txt
+          pdfinfo Docs/ERD.pdf >/tmp/erd-pdfinfo.txt
 
           # Make sure it contains at least one page.
           pages="$(awk -F: '/^Pages:/ {gsub(/ /, "", $2); print $2}' /tmp/erd-pdfinfo.txt)"
 
           if [[ -z "$pages" || "$pages" -lt 1 ]]; then
-            echo "::error file=ERD.pdf::PDF has no pages"
+            echo "::error file=Docs/ERD.pdf::PDF has no pages"
             exit 1
           fi
 
-          echo "ERD.pdf: valid PDF, $pages page(s)"
+          echo "Docs/ERD.pdf: valid PDF, $pages page(s)"
 
       - name: Validate SQL
         shell: bash
@@ -85,4 +85,4 @@ jobs:
           python -m pip install --disable-pip-version-check --quiet sqlfluff
 
           # Parse/lint using tsql dialect for SQL Server compatibility.
-          sqlfluff lint RaceDay.sql --dialect tsql
+          sqlfluff lint Docs/RaceDay.sql --dialect tsql
