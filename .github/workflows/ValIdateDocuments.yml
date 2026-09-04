@@ -1,5 +1,5 @@
-# .github/workflows/validate-docs.yml
-name: ValidateDocuments
+# .github/workflows/ValIdateDocuments.yml
+name: ValIdateDocuments
 
 on:
   push:
@@ -7,13 +7,13 @@ on:
       - "API.md"
       - "ERD.pdf"
       - "RaceDay.sql"
-      - ".github/workflows/validate-Docs.yml"
+      - ".github/workflows/ValIdateDocuments.yml"
   pull_request:
     paths:
       - "API.md"
       - "ERD.pdf"
       - "RaceDay.sql"
-      - ".github/workflows/validate-Docs.yml"
+      - ".github/workflows/ValIdateDocuments.yml"
 
 permissions:
   contents: read
@@ -84,5 +84,5 @@ jobs:
 
           python -m pip install --disable-pip-version-check --quiet sqlfluff
 
-          # Parse/lint only. RaceDay.sql is never executed against a database.
-          sqlfluff lint RaceDay.sql --dialect postgres
+          # Parse/lint using tsql dialect for SQL Server compatibility.
+          sqlfluff lint RaceDay.sql --dialect tsql
