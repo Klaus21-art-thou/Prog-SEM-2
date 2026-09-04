@@ -1,46 +1,88 @@
-# This is a basic workflow to help you get started with Actions
-name: ValIdateDocuments
+# .github/workflows/validate-docs.yml
+name: ValidateDocuments
 
 on:
   push:
-    branches: [ "main" ]
+    paths:
+      - "API.md"
+      - "ERD.pdf"
+      - "RaceDay.sql"
+      - ".github/workflows/validate-Docs.yml"
   pull_request:
-    branches: [ "main" ]
-  workflow_dispatch:
+    paths:
+      - "API.md"
+      - "ERD.pdf"
+      - "RaceDay.sql"
+      - ".github/workflows/validate-Docs.yml"
+
+permissions:
+  contents: read
 
 jobs:
-  build:
+  validate:
+    name: Validate documentation artifacts
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Verify Core Project Files
+      - name: Check required files
+        shell: bash
         run: |
-          MISSING_FILES=0
-          
-          if [ ! -f "API.md" ]; then
-            echo "::error::Missing API documentation (API.md)"
-            MISSING_FILES=$((MISSING_FILES + 1))
-          fi
+          set -euo pipefail
 
-          if [ ! -f "RaceDay.sql" ]; then
-            echo "::error::Missing SQL script (RaceDay.sql)"
-            MISSING_FILES=$((MISSING_FILES + 1))
-          fi
+          files=(
+            "API.md"
+            "ERD.pdf"
+            "RaceDay.sql"
+          )
 
-          if [ ! -f "ERD.pdf" ]; then
-            echo "::warning::ERD diagram (ERD.pdf) not found in the root directory."
-          fi
+          for file in "${files[@]}"; do
+            if [[ ! -f "$file" ]]; then
+              echo "::error file=$file::Required file is missing"
+              exit 1
+            fi
 
-          if [ $MISSING_FILES -gt 0 ]; then
-            echo "Validation failed: $MISSING_FILES required file(s) missing."
-            exit 1
-          else
-            echo "All required core files are present."
-          fi
+            if [[ ! -s "$file" ]]; then
+              echo "::error file=$file::Required file is empty"
+              exit 1
+            fi
+          done
 
-      - name: Lint Markdown Files
-        uses: DavidAnson/markdownlint-cli2-action@v12
+      - name: Validate Markdown
+        uses: DavidAnson/markdownlint-cli2-action@v19
         with:
-          globs: "**/*.md"
+          globs: |
+            API.md
+
+      - name: Validate PDF
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends poppler-utils
+
+          # Check that the file is actually a readable PDF.
+          pdfinfo ERD.pdf >/tmp/erd-pdfinfo.txt
+
+          # Make sure it contains at least one page.
+          pages="$(awk -F: '/^Pages:/ {gsub(/ /, "", $2); print $2}' /tmp/erd-pdfinfo.txt)"
+
+          if [[ -z "$pages" || "$pages" -lt 1 ]]; then
+            echo "::error file=ERD.pdf::PDF has no pages"
+            exit 1
+          fi
+
+          echo "ERD.pdf: valid PDF, $pages page(s)"
+
+      - name: Validate SQL
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          python -m pip install --disable-pip-version-check --quiet sqlfluff
+
+          # Parse/lint only. RaceDay.sql is never executed against a database.
+          sqlfluff lint RaceDay.sql --dialect postgres
