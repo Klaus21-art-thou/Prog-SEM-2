@@ -19,7 +19,7 @@ permissions:
   contents: read
 
 jobs:
-  validate:
+  build:
     name: Validate documentation artifacts
     runs-on: ubuntu-latest
 
