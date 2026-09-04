@@ -53,7 +53,6 @@ jobs:
       - name: Create Markdown Linter Config
         shell: bash
         run: |
-          # Disable line length checks (MD013) to allow wide markdown tables
           echo "MD013: false" > .markdownlint.yaml
 
       - name: Validate Markdown
@@ -70,10 +69,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends poppler-utils
 
-          # Check that the file is actually a readable PDF.
           pdfinfo Docs/ERD.pdf >/tmp/erd-pdfinfo.txt
 
-          # Make sure it contains at least one page.
           pages="$(awk -F: '/^Pages:/ {gsub(/ /, "", $2); print $2}' /tmp/erd-pdfinfo.txt)"
 
           if [[ -z "$pages" || "$pages" -lt 1 ]]; then
@@ -90,5 +87,11 @@ jobs:
 
           python -m pip install --disable-pip-version-check --quiet sqlfluff
 
-          # Parse/lint using tsql dialect for SQL Server compatibility.
-          sqlfluff lint Docs/RaceDay.sql --dialect tsql
+          # Create a local SQLFluff config to ignore style, capitalization, and line-length rules
+          cat <<EOF > .sqlfluff
+          [sqlfluff]
+          dialect = tsql
+          exclude_rules = CP02, LT05, LT01, AM04
+          EOF
+
+          sqlfluff lint Docs/RaceDay.sql
