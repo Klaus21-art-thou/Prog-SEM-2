@@ -50,6 +50,12 @@ jobs:
             fi
           done
 
+      - name: Create Markdown Linter Config
+        shell: bash
+        run: |
+          # Disable line length checks (MD013) to allow wide markdown tables
+          echo "MD013: false" > .markdownlint.yaml
+
       - name: Validate Markdown
         uses: DavidAnson/markdownlint-cli2-action@v19
         with:
