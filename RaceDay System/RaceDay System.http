@@ -1,6 +1,0 @@
-@RaceDay_System_HostAddress = http://localhost:5084
-
-GET {{RaceDay_System_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
