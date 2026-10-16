@@ -1,0 +1,49 @@
+name: RaceDay CI/CD Pipeline
+
+on:
+  push:
+    branches: ["Part-2", "main", "master"]
+  pull_request:
+    branches: ["Part-2", "main", "master"]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Discover target
+        id: discover
+        shell: bash
+        run: |
+          CSPROJ=$(find . -maxdepth 6 -name "RaceDayManagementAPI.csproj" -print -quit || true)
+          SOLN=$(find . -maxdepth 6 -name "*.sln" -print -quit || true)
+
+          if [ -n "$CSPROJ" ]; then
+            TARGET="$CSPROJ"
+          elif [ -n "$SOLN" ]; then
+            TARGET="$SOLN"
+          else
+            echo "No project or solution found"
+            ls -R
+            exit 1
+          fi
+
+          TARGET="${TARGET#./}"
+          echo "target=$TARGET" >> "$GITHUB_OUTPUT"
+
+      - name: Restore Dependencies
+        run: dotnet restore "${{ steps.discover.outputs.target }}"
+
+      - name: Build Solution
+        run: dotnet build "${{ steps.discover.outputs.target }}" --configuration Release --no-restore
+
+      - name: Run Unit Tests
+        run: dotnet test "${{ steps.discover.outputs.target }}" --configuration Release --no-build --verbosity normal
