@@ -19,11 +19,33 @@ jobs:
       with:
         dotnet-version: '8.0.x'
 
+    - name: Discover solution and project files
+      id: discover
+      run: |
+        echo "Searching for solution and project files..."
+        # prefer .sln; fall back to RaceDayManagementAPI.csproj if no .sln found
+        SOLUTION=$(find . -maxdepth 6 -name '*.sln' -print -quit || true)
+        CSPROJ=$(find . -maxdepth 6 -name 'RaceDayManagementAPI.csproj' -print -quit || true)
+        echo "Found SOLUTION=${SOLUTION}"
+        echo "Found CSPROJ=${CSPROJ}"
+        if [ -z "$SOLUTION" ] && [ -n "$CSPROJ" ]; then
+          echo "No .sln found; using csproj"
+          SOLUTION="$CSPROJ"
+        fi
+        if [ -z "$SOLUTION" ]; then
+          echo "No .sln or RaceDayManagementAPI.csproj found; listing repo for debugging"
+          ls -R
+          exit 1
+        fi
+        # Normalize path (remove leading ./)
+        SOLUTION="${SOLUTION#./}"
+        echo "solution=$SOLUTION" >> $GITHUB_OUTPUT
+
     - name: Restore Dependencies
-      run: dotnet restore
+      run: dotnet restore "${{ steps.discover.outputs.solution }}"
 
     - name: Build Solution
-      run: dotnet build --configuration Release --no-restore
+      run: dotnet build "${{ steps.discover.outputs.solution }}" --configuration Release --no-restore
 
     - name: Run Unit Tests
-      run: dotnet test --configuration Release --no-build --verbosity normal
+      run: dotnet test "${{ steps.discover.outputs.solution }}" --configuration Release --no-build --verbosity normal
