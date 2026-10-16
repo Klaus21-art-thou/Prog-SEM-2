@@ -2,48 +2,68 @@ name: RaceDay CI/CD Pipeline
 
 on:
   push:
-    branches: ["Part-2", "main", "master"]
+    branches: [ "Part-2", "main", "master" ]
   pull_request:
-    branches: ["Part-2", "main", "master"]
+    branches: [ "Part-2", "main", "master" ]
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup .NET 8
+      - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "8.0.x"
+          dotnet-version: '8.0.x'
 
-      - name: Discover target
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Discover solution and project files
         id: discover
         shell: bash
         run: |
-          CSPROJ=$(find . -maxdepth 6 -name "RaceDayManagementAPI.csproj" -print -quit || true)
-          SOLN=$(find . -maxdepth 6 -name "*.sln" -print -quit || true)
+          echo "Searching for .sln and RaceDayManagementAPI.csproj..."
+          SOLN=$(find . -maxdepth 6 -name '*.sln' -print -quit || true)
+          CSPROJ=$(find . -maxdepth 6 -name 'RaceDayManagementAPI.csproj' -print -quit || true)
+          echo "Found SOLN=${SOLN}"
+          echo "Found CSPROJ=${CSPROJ}"
 
-          if [ -n "$CSPROJ" ]; then
-            TARGET="$CSPROJ"
-          elif [ -n "$SOLN" ]; then
+          # Prefer the .sln so test projects' packages are restored
+          if [ -n "$SOLN" ]; then
             TARGET="$SOLN"
+          elif [ -n "$CSPROJ" ]; then
+            TARGET="$CSPROJ"
           else
-            echo "No project or solution found"
-            ls -R
+            echo "No .sln or RaceDayManagementAPI.csproj found; listing repo for debugging:"
+            ls -la
+            find . -maxdepth 4 -type f -name '*.csproj' -print
             exit 1
           fi
 
+          # Normalize path
           TARGET="${TARGET#./}"
-          echo "target=$TARGET" >> "$GITHUB_OUTPUT"
+          echo "target=$TARGET" >> $GITHUB_OUTPUT
 
-      - name: Restore Dependencies
+      - name: Show chosen target
+        run: |
+          echo "Building target: ${{ steps.discover.outputs.target }}"
+          echo "Project files found:"
+          find . -maxdepth 6 -name '*.csproj' -print
+
+      - name: Restore dependencies
         run: dotnet restore "${{ steps.discover.outputs.target }}"
 
-      - name: Build Solution
+      - name: Build
         run: dotnet build "${{ steps.discover.outputs.target }}" --configuration Release --no-restore
 
-      - name: Run Unit Tests
+      - name: Run unit tests
         run: dotnet test "${{ steps.discover.outputs.target }}" --configuration Release --no-build --verbosity normal
