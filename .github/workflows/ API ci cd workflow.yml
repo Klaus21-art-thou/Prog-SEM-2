@@ -1,0 +1,34 @@
+name: RaceDay CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "Part-2", "main", "master" ]
+  pull_request:
+    branches: [ "Part-2", "main", "master" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. Checkout the repository code from GitHub
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    # 2. Set up .NET 8 SDK environment
+    - name: Setup .NET 8
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    # 3. Restore NuGet packages for the entire solution
+    - name: Restore Dependencies
+      run: dotnet restore
+
+    # 4. Build the API and test projects in Release mode
+    - name: Build Solution
+      run: dotnet build --configuration Release --no-restore
+
+    # 5. Run the xUnit test suite with In-Memory database
+    - name: Run Unit Tests
+      run: dotnet test --configuration Release --no-build --verbosity normal
