@@ -1,0 +1,109 @@
+﻿@using RaceDay.MVC.Services
+@model EventListViewModel
+@{
+    ViewData["Title"] = "Events";
+    var filter = Model.Filter;
+}
+
+<h1>Find an event</h1>
+
+@* The filters. This is a GET form, so the chosen filters appear in the address and can be bookmarked. *@
+<form asp-action="Index" method="get" class="border rounded p-3 mb-4" aria-label="Filter events">
+    <div class="row g-3">
+        <div class="col-md-6 col-lg-4">
+            <label for="Search" class="form-label">Search</label>
+            <input id="Search" name="Search" value="@filter.Search" class="form-control" placeholder="Name, description or venue" />
+        </div>
+        <div class="col-md-6 col-lg-2">
+            <label for="EventType" class="form-label">Type</label>
+            <select id="EventType" name="EventType" class="form-select">
+                <option value="">All types</option>
+                @foreach (var type in new[] { "Running", "Cycling", "Walking" })
+                {
+                    <option value="@type" selected="@(filter.EventType == type)">@type</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <label for="Location" class="form-label">Location</label>
+            <select id="Location" name="Location" class="form-select">
+                <option value="">All locations</option>
+                @foreach (var city in Model.Locations)
+                {
+                    <option value="@city" selected="@(filter.Location == city)">@city</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <label for="Status" class="form-label">Show</label>
+            <select id="Status" name="Status" class="form-select">
+                <option value="" selected="@(string.IsNullOrEmpty(filter.Status))">All events</option>
+                <option value="Upcoming" selected="@(filter.Status == "Upcoming")">Upcoming</option>
+                <option value="Completed" selected="@(filter.Status == "Completed")">Completed</option>
+                <option value="Cancelled" selected="@(filter.Status == "Cancelled")">Cancelled</option>
+            </select>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <label for="DateFrom" class="form-label">From date</label>
+            <input id="DateFrom" name="DateFrom" type="date" value="@filter.DateFrom?.ToString("yyyy-MM-dd")" class="form-control" />
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <label for="DateTo" class="form-label">To date</label>
+            <input id="DateTo" name="DateTo" type="date" value="@filter.DateTo?.ToString("yyyy-MM-dd")" class="form-control" />
+        </div>
+        <div class="col-lg-6 d-flex align-items-end gap-2">
+            <button type="submit" class="btn btn-primary">Apply filters</button>
+            <a class="btn btn-outline-secondary" asp-action="Index" asp-route-Status="Upcoming">Reset</a>
+        </div>
+    </div>
+</form>
+
+@* Friendly message if the API could not be reached or returned an error *@
+@if (ViewBag.ErrorMessage != null)
+{
+    <p role="alert" class="alert alert-warning">@ViewBag.ErrorMessage</p>
+}
+else if (!Model.Events.Any())
+{
+    <p>No events match your filters. Try changing or resetting them.</p>
+}
+else
+{
+    <p class="text-muted">@Model.Events.Count event@(Model.Events.Count == 1 ? "" : "s") found</p>
+}
+
+<section class="row g-3" aria-label="Events">
+    @foreach (var ev in Model.Events)
+    {
+        Model.CategoriesByEvent.TryGetValue(ev.EventId, out var categories);
+        <article class="col-md-6 col-lg-4">
+            <div class="card h-100">
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h2 class="h5 card-title mb-0">@ev.Title</h2>
+                        <span class="badge @UiHelper.StatusClass(ev.Status)">@ev.Status</span>
+                    </div>
+                    <p class="card-text">@ev.Description</p>
+                    <ul class="list-unstyled small text-muted mb-3">
+                        <li>@ev.EventType &middot; @ev.EventDate.ToString("ddd, dd MMM yyyy, HH:mm")</li>
+                        @if (ev.Venue != null)
+                        {
+                            <li>@ev.Venue.Name, @ev.Venue.City</li>
+                        }
+                        <li>
+                            @if (categories != null && categories.Any())
+                            {
+                                @("Distances: " + string.Join(", ", categories.Select(c => c.DistanceKm.ToString("0.##") + " km")))
+                            }
+                            else
+                            {
+                                @("Race categories coming soon")
+                            }
+                        </li>
+                    </ul>
+                    <a class="btn btn-outline-primary mt-auto" asp-action="Details" asp-route-id="@ev.EventId">View details</a>
+                </div>
+            </div>
+        </article>
+    }
+</section>

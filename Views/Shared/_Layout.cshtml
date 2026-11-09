@@ -1,0 +1,272 @@
+﻿@using RaceDay.MVC.Services
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - RaceDay</title>
+
+    <!-- Bootstrap 5 & FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --rd-dark: #0f172a;
+            --rd-slate: #1e293b;
+            --rd-accent: #10b981;
+            --rd-accent-hover: #059669;
+            --rd-secondary: #f59e0b;
+            --rd-light: #f8fafc;
+            --rd-font-brand: 'Teko', sans-serif;
+            --rd-font-body: 'Inter', sans-serif;
+        }
+
+        body {
+            font-family: var(--rd-font-body);
+            background-color: #f1f5f9;
+            color: #334155;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* Sporty Brand Header */
+        .navbar-sport {
+            background-color: var(--rd-dark) !important;
+            border-bottom: 3px solid var(--rd-accent);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .navbar-brand-sport {
+            font-family: var(--rd-font-brand);
+            font-size: 2.2rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: #ffffff !important;
+        }
+
+        .navbar-brand-sport span {
+            color: var(--rd-accent);
+            font-style: italic;
+        }
+
+        .nav-link {
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.95rem;
+            padding: 0.6rem 1rem !important;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: var(--rd-accent) !important;
+        }
+
+        /* Energetic Buttons */
+        .btn-sport-primary {
+            background-color: var(--rd-accent);
+            color: #ffffff;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border: none;
+            border-radius: 6px;
+            padding: 0.5rem 1.25rem;
+            box-shadow: 0 3px 10px rgba(16, 185, 129, 0.3);
+            transition: all 0.2s ease;
+        }
+
+        .btn-sport-primary:hover {
+            background-color: var(--rd-accent-hover);
+            color: #ffffff;
+            transform: translateY(-1px);
+        }
+
+        .btn-sport-outline {
+            border: 2px solid var(--rd-accent);
+            color: var(--rd-accent);
+            font-weight: 700;
+            text-transform: uppercase;
+            border-radius: 6px;
+            background: transparent;
+        }
+
+        .btn-sport-outline:hover {
+            background-color: var(--rd-accent);
+            color: #ffffff;
+        }
+
+        /* Sport Card Styling */
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+        }
+
+        /* Headings */
+        h1, h2, h3, .h1, .h2, .h3 {
+            font-family: var(--rd-font-brand);
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+        }
+
+        h1 { font-size: 2.8rem; font-weight: 700; }
+        h2 { font-size: 2.2rem; }
+
+        /* Tables & Badges */
+        .table {
+            background: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .table thead {
+            background-color: var(--rd-dark);
+            color: #ffffff;
+        }
+
+        .badge {
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            padding: 0.45em 0.75em;
+            text-transform: uppercase;
+        }
+
+        /* Main Container Padding */
+        main {
+            flex: 1;
+        }
+
+        footer {
+            background-color: var(--rd-dark);
+            color: #94a3b8;
+            border-top: 1px solid var(--rd-slate);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark navbar-sport py-2">
+            <div class="container">
+                <a class="navbar-brand navbar-brand-sport d-flex align-items-center gap-2" asp-controller="Home" asp-action="Index">
+                    <i class="fa-solid fa-bolt text-warning"></i> RACE<span>DAY</span>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain" aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse" id="navbarMain">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Home" asp-action="Index"><i class="fa-solid fa-calendar-days me-1"></i> Events</a>
+                        </li>
+
+                        @if (Context.Session.GetString(SessionKeys.UserRole) == RoleNames.Organiser)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-warning" asp-controller="Organiser" asp-action="Dashboard"><i class="fa-solid fa-gauge-high me-1"></i> Dashboard</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Organiser" asp-action="Events"><i class="fa-solid fa-list-check me-1"></i> Manage Events</a>
+                            </li>
+                        }
+
+                        @if (Context.Session.GetString(SessionKeys.UserRole) == RoleNames.Participant)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-info" asp-controller="Participant" asp-action="MyEvents"><i class="fa-solid fa-person-running me-1"></i> My Enrolments</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-info" asp-controller="Participant" asp-action="MyResults"><i class="fa-solid fa-trophy me-1"></i> My Results</a>
+                            </li>
+                        }
+                    </ul>
+
+                    <ul class="navbar-nav align-items-center gap-2">
+                        @if (Context.Session.GetInt32(SessionKeys.UserId) != null)
+                        {
+                            <li class="nav-item me-2">
+                                <a class="nav-link text-light d-flex align-items-center gap-1" asp-controller="Participant" asp-action="Profile">
+                                    <i class="fa-solid fa-user-circle fs-5 text-success"></i>
+                                    <span>@Context.Session.GetString(SessionKeys.UserName)</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger font-weight-bold">
+                                        <i class="fa-solid fa-right-from-bracket me-1"></i> Logout
+                                    </button>
+                                </form>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-light" asp-controller="Account" asp-action="Login">Log In</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="btn btn-sport-primary" asp-controller="Account" asp-action="Register">Register</a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main role="main" class="container py-4">
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show d-flex align-items-center gap-2" role="alert">
+                <i class="fa-solid fa-circle-check fs-5"></i>
+                <div>@TempData["Success"]</div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center gap-2" role="alert">
+                <i class="fa-solid fa-triangle-exclamation fs-5"></i>
+                <div>@TempData["Error"]</div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+        @if (TempData["Info"] != null)
+        {
+            <div class="alert alert-info alert-dismissible fade show d-flex align-items-center gap-2" role="alert">
+                <i class="fa-solid fa-circle-info fs-5"></i>
+                <div>@TempData["Info"]</div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
+        @RenderBody()
+    </main>
+
+    <footer class="py-3 mt-auto">
+        <div class="container text-center text-md-between d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
+            <div>
+                <span class="fw-bold text-light">RaceDay Management Platform</span> &copy; 2026. All rights reserved.
+            </div>
+            <div>
+                <a asp-controller="Home" asp-action="Privacy" class="text-muted text-decoration-none">Privacy Policy</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
