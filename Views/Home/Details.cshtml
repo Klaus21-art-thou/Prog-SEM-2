@@ -1,0 +1,100 @@
+﻿@using RaceDay.MVC.Services
+@model EventDetailsViewModel
+@{
+    ViewData["Title"] = Model.Event.Title;
+    var ev = Model.Event;
+}
+
+<p class="mb-1"><a asp-action="Index">&larr; Back to events</a></p>
+
+<div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+    <h1>@ev.Title</h1>
+    <span class="badge @UiHelper.StatusClass(ev.Status) fs-6">@ev.Status</span>
+</div>
+
+@if (ViewBag.ErrorMessage != null)
+{
+    <p role="alert" class="alert alert-warning">@ViewBag.ErrorMessage</p>
+}
+
+<p class="lead">@ev.Description</p>
+
+<dl class="row">
+    <dt class="col-sm-3">Type</dt>
+    <dd class="col-sm-9">@ev.EventType</dd>
+    <dt class="col-sm-3">Date and time</dt>
+    <dd class="col-sm-9">@ev.EventDate.ToString("dddd, dd MMMM yyyy, HH:mm")</dd>
+    @if (ev.Venue != null)
+    {
+        <dt class="col-sm-3">Location</dt>
+        <dd class="col-sm-9">@ev.Venue.Name, @ev.Venue.Address, @ev.Venue.City, @ev.Venue.Province</dd>
+    }
+    @if (ev.Organiser != null)
+    {
+        <dt class="col-sm-3">Organiser</dt>
+        <dd class="col-sm-9">@ev.Organiser.FullName</dd>
+    }
+</dl>
+
+<h2 class="h4">Race categories</h2>
+
+@if (!Model.IsParticipant)
+{
+    <p class="text-muted">Only participants can enter an event.</p>
+}
+else if (!Model.CanEnrol)
+{
+    <p class="alert alert-info" role="status">Entries for this event are closed.</p>
+}
+
+@if (!Model.Categories.Any())
+{
+    <p>The race categories for this event have not been added yet.</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th scope="col">Category</th>
+                    <th scope="col" class="text-end">Distance</th>
+                    <th scope="col" class="text-end">Entry fee</th>
+                    <th scope="col">Starts</th>
+                    <th scope="col" class="text-end">Min age</th>
+                    <th scope="col"><span class="visually-hidden">Enrol</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var c in Model.Categories)
+                {
+                    <tr>
+                        <td>
+                            <strong>@c.CategoryName</strong>
+                            @if (!string.IsNullOrWhiteSpace(c.RouteDescription))
+                            {
+                                <br />
+                    
+                                <span class="text-muted small">@c.RouteDescription</span>
+                            }
+                        </td>
+                        <td class="text-end">@c.DistanceKm.ToString("0.##") km</td>
+                        <td class="text-end">R @c.EntryFee.ToString("N2", System.Globalization.CultureInfo.InvariantCulture)</td>
+                        <td>@c.StartDateTime.ToString("dd MMM yyyy, HH:mm")</td>
+                        <td class="text-end">@(c.MinAge?.ToString() ?? "-")</td>
+                        <td class="text-end">
+                            @if (Model.EnrolledCategoryIds.Contains(c.CategoryId))
+                            {
+                                <span class="badge bg-success">You are enrolled</span>
+                            }
+                            else if (Model.CanEnrol)
+                            {
+                                <a class="btn btn-sm btn-primary" asp-controller="Participant" asp-action="Enrol" asp-route-categoryId="@c.CategoryId">Enrol</a>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
