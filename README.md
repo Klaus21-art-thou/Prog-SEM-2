@@ -10,38 +10,17 @@ https://youtu.be/xM1GMvuvjWo
 ## ERD and API
 <img width="1087" height="586" alt="image" src="https://github.com/user-attachments/assets/2db389ca-167c-4ede-87c9-2307124d9e36" />
 <img width="835" height="571" alt="image" src="https://github.com/user-attachments/assets/6bfa9602-af0f-4872-b96f-711790592afc" />
+# Quick Start Guide: Running RaceDayManagementAPI with Docker
 
-## 🐳 Docker Setup & Usage
+Follow these simple steps to run the API container on your machine:
 
-Follow the steps below to containerize and run the **RaceDayManagementAPI** using Docker.
-
-### Prerequisites
-* Ensure [Docker](https://www.docker.com/) is installed and running on your local machine.
-
----
-
-### 1. Add the Dockerfile
-Create a file named **`Dockerfile`** (with **no** file extension) in the root directory of your `RaceDayManagementAPI` project folder (alongside your `.csproj` file) and paste the following configuration:
-
-```dockerfile
-# Base runtime environment for .NET 8
-FROM [mcr.microsoft.com/dotnet/aspnet:8.0](https://mcr.microsoft.com/dotnet/aspnet:8.0) AS base
-WORKDIR /app
-EXPOSE 80
-EXPOSE 443
-
-# Build environment using the .NET 8 SDK
-FROM [mcr.microsoft.com/dotnet/sdk:8.0](https://mcr.microsoft.com/dotnet/sdk:8.0) AS build
-WORKDIR /src
-COPY ["RaceDayManagementAPI.csproj", "./"]
-RUN dotnet restore "RaceDayManagementAPI.csproj"
-COPY . .
-WORKDIR "/src"
-RUN dotnet build "RaceDayManagementAPI.csproj" -c Release -o /app/build
-
-# Publish the application
-FROM build AS publish
-RUN dotnet publish "RaceDayManagementAPI.csproj" -c Release -o /app/publish /p:UseAppHost=false
+1. **Install & Start Docker**: Ensure [Docker](https://www.docker.com/) is installed and running on your system.
+2. **Load or Pull the Image**: 
+   * If you have a `.tar` file archive, run: `docker load -i raceday-api.tar`
+   * Or if pulling from a registry, run: `docker pull your-username/raceday-api:latest`
+3. **Run the Container**: Open your terminal and execute:
+   ```bash
+   docker run -d -p 8080:80 --name raceday-api-instance raceday-api:latest
 
 # Final runtime image
 FROM base AS final
